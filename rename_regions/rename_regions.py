@@ -37,7 +37,7 @@ if __name__ == "__main__":
     
     i = parameters.inputfolder
     if not i.is_dir():
-        sys.exit("Error: {} is not a valid folder")
+        sys.exit("Error: {} is not a valid folder".format(i))
 
     s = parameters.string
     bad_chars= set("/|\:<>*")

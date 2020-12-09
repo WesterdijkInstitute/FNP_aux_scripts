@@ -58,7 +58,7 @@ if __name__ == "__main__":
     for num, gbk in enumerate(gbks):
         p = gbk.parent
         old = gbk.name
-        new = "{0}.region{1:0{2}d}.gbk".format(s, num, padding_space)
+        new = "{0}.region{1:0{2}d}.gbk".format(s, num+1, padding_space)
         move(p/old, p/new)
     print("Renamed {} files".format(num_gbks))
         

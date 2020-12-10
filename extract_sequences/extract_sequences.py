@@ -33,11 +33,14 @@ def parameter_parser():
         required=True)
     parser.add_argument("-n", "--name", type=str, required=True, 
         help="Name of fasta file.")
+    parser.add_argument("-b", "--biosynthetic", default=False, 
+        action="store_true", help="If activated, only extract proteins flagged \
+        fungiSMASH as 'biosynthetic'")
     
     return parser.parse_args()
 
 
-def extract_cbp(gbk: list, fasta: dict) -> None:
+def extract_cbp(gbk: list, fasta: dict, biosynthetic: bool) -> None:
     try:
         records = list(SeqIO.parse(gbk, "genbank"))
     except ValueError as e:
@@ -50,51 +53,60 @@ def extract_cbp(gbk: list, fasta: dict) -> None:
                     CDS = feature
                     cds_num += 1
                     
-                    protein_type = ""
-                    # catch fungiSMASH 5 annotation
-                    role = ""
-                    if "gene_kind" in CDS.qualifiers:
-                        role = CDS.qualifiers["gene_kind"][0]
-                        if role == "biosynthetic" and "gene_functions" in CDS.qualifiers:
-                            # get any extra labels
-                            name = ""
-                            if "name" in CDS.qualifiers:
-                                name = CDS.qualifiers["name"][0]
-                            gene = ""
-                            if "gene" in CDS.qualifiers:
-                                gene = CDS.qualifiers["gene"][0]
-                            protein_id = ""
-                            if "proteinId" in CDS.qualifiers:
-                                protein_id = CDS.qualifiers["proteinId"][0]
-                            elif "protein_id" in CDS.qualifiers:
-                                protein_id = CDS.qualifiers["protein_id"][0]
-                            
-                            
-                            protein_types = []
-                            for x in CDS.qualifiers["gene_functions"]:
-                                if x.startswith("biosynthetic (rule-based-clusters)"):
-                                    protein_types.append(x.split("biosynthetic (rule-based-clusters) ")[1].split(":")[0])
-                            if len(set(protein_types)) == 1:
-                                protein_type = protein_types[0]
-                            elif "NRPS_PKS" in CDS.qualifiers:
-                                protein_type = "PKS-NRPS_hybrid"
+                    # user specified 'biosynthetic'. Try to catch fungiSMASH's annotation
+                    if biosynthetic:
+                        role = ""
+                        if "gene_kind" in CDS.qualifiers:
+                            role = CDS.qualifiers["gene_kind"][0]
+                            # CDS has annotation but it's not 'biosynthetic'
+                            if role != "biosynthetic":
+                                continue
+                        # CDS doesn't have annotation
+                        else:
+                            continue
+                        
+                    # get any extra labels
+                    name = ""
+                    if "name" in CDS.qualifiers:
+                        name = CDS.qualifiers["name"][0]
+                    gene = ""
+                    if "gene" in CDS.qualifiers:
+                        gene = CDS.qualifiers["gene"][0]
+                    protein_id = ""
+                    if "proteinId" in CDS.qualifiers:
+                        protein_id = CDS.qualifiers["proteinId"][0]
+                    elif "protein_id" in CDS.qualifiers:
+                        protein_id = CDS.qualifiers["protein_id"][0]
                     
-                            try:
-                                sequence = CDS.qualifiers["translation"][0]
-                            except KeyError:
-                                sys.exit("Error: file {} missing 'translation' qualifier".format(gbk))
-                            
-                            identifier = "{}~L{}+CDS{}".format(gbk.stem, locus_num, cds_num)
-                            # write up extra labels
-                            identifier = "{} BiosyntheticType:{}".format(identifier, protein_type)
-                            if name != "":
-                                identifier = "{} name:{}".format(identifier, name)
-                            if gene != "":
-                                identifier = "{} gene:{}".format(identifier, gene)
-                            if protein_id != "":
-                                identifier = "{} protein:{}".format(identifier, protein_id)
-                            
-                            fasta[identifier] = sequence
+                    
+                    protein_types = []
+                    protein_type = ""
+                    if "gene_functions" in CDS.qualifiers:
+                        for x in CDS.qualifiers["gene_functions"]:
+                            if x.startswith("biosynthetic (rule-based-clusters)"):
+                                protein_types.append(x.split("biosynthetic (rule-based-clusters) ")[1].split(":")[0])
+                        if len(set(protein_types)) == 1:
+                            protein_type = protein_types[0]
+                        elif "NRPS_PKS" in CDS.qualifiers:
+                            protein_type = "PKS-NRPS_hybrid"
+            
+                    try:
+                        sequence = CDS.qualifiers["translation"][0]
+                    except KeyError:
+                        sys.exit("Error: file {} missing 'translation' qualifier".format(gbk))
+                    
+                    identifier = "{}~L{}+CDS{}".format(gbk.stem, locus_num, cds_num)
+                    # write up extra labels
+                    if protein_type != "":
+                        identifier = "{} BiosyntheticType:{}".format(identifier, protein_type)
+                    if name != "":
+                        identifier = "{} name:{}".format(identifier, name)
+                    if gene != "":
+                        identifier = "{} gene:{}".format(identifier, gene)
+                    if protein_id != "":
+                        identifier = "{} protein:{}".format(identifier, protein_id)
+                    
+                    fasta[identifier] = sequence
     return
 
 
@@ -138,8 +150,8 @@ if __name__ == "__main__":
             
     fasta = dict()
     for gbk in gbks:
-        extract_cbp(gbk, fasta)
+        extract_cbp(gbk, fasta, parameters.biosynthetic)
     
-    print("Got {} sequences".format(len(fasta)))
+    print("Got {} sequence(s)".format(len(fasta)))
     
     write_fasta_file(fasta, n)

@@ -25,14 +25,62 @@ Note that this script will write consecutive region numbers (instead of fungiSMA
 Use this script to extract the amino acid sequences corresponding to genes marked by fungiSMASH 5 as 'biosynthetic'.
 
 ```
-usage: extract_sequences.py [-h] -i INPUT -n NAME
+usage: extract_sequences_core_enzymes.py [-h] -i INPUT -n NAME [-b] [--include INCLUDE] [-t TAXONOMY_FILTER] [-d DOMAIN]
 
 optional arguments:
   -h, --help            show this help message and exit
   -i INPUT, --input INPUT
-                        Input. Either a GenBank file or a folder with
-                        fungiSMASH results
+                        Input. Either a GenBank file or a folder with fungiSMASH results
   -n NAME, --name NAME  Name of fasta file.
+  -b, --biosynthetic    If activated, only extract proteins flagged fungiSMASH as 'biosynthetic'
+  --include INCLUDE     Optional list of strings used to filter GenBank files to be analyzed
+  -t TAXONOMY_FILTER, --taxonomy_filter TAXONOMY_FILTER
+                        Filter extraction using taxonomy within the GenBank file(s) (if annotated)
+  -d DOMAIN, --domain DOMAIN
+                        Extract domain sub-sequences from core biosynthetic proteins identified by antiSMASH. Valid arguments: KS, AT, A
 ```
 
-The headers will have the format `[GenBank base name]~L[Locus number]+CDS[CDS number] BiosyntheticType:[annotated fungiSMASH type] name:[name, optional] gene:[gene ID, optional] protein:[protein ID, optional]`
+The headers will have the format `[GenBank base name]~L[Locus number]+CDS[CDS number] BiosyntheticType:[annotated fungiSMASH type] name:[name if annotated] gene:[gene ID if annotated] protein:[protein ID if anntoatedl]`. If extracting a particular domain subsequence, additional information will be added. For example:
+```
+>BGC0000003.1~L0+CDS1@0-339_PKS_KS(Iterative-KS) BiosyntheticType:T1PKS gene:AFT9-1 protein:BAD97694.1
+MDPQQRLLLETTYEALENAGIPQANTNGSNTSVHVAMFTRDYDRNVYKDTVGIPKYQVTGTGEAIMSNRISHIFNLHGPS
+MTIDTGCSGAMTAVSQACMSLRSGDCDIALAGAVNLIMSPDHHISMSNLHMLNAEGKSYAFDSRGAGYGRGEGVATIVMK
+RLDDAVRCHDPIRAVILDAVINQDGYTAGITLPSSEAQAQLERKALNRVGLKPQEVAYIEAHGTGTAAGDAAELDALSSV
+FCVDRDLPLYVGSVKSNIGHLEAASGMAALIKATLMLENEAIPPSINFSRPKENLRIDERNIKIPTALQPWPKGASARIC
+VNSFGYGGTNAHAILERAP
+```
+
+## Filter copy
+
+Use this script to copy GenBank files according to a taxonomical filter. 
+
+```
+usage: filtercopy_genbank.py [-h] -i INPUT -o OUTPUTFOLDER -t TAXONOMY_FILTER [--include INCLUDE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        Input. Either a GenBank file or a folder with fungiSMASH results
+  -o OUTPUTFOLDER, --outputfolder OUTPUTFOLDER
+                        Output folder where GenBank file(s) will be copied to
+  -t TAXONOMY_FILTER, --taxonomy_filter TAXONOMY_FILTER
+                        Filter extraction using taxonomy within the GenBank file(s) (if annotated)
+  --include INCLUDE     Optional list of strings used to filter GenBank files to be analyzed. Default: 'region', 'BGC'
+```
+
+For this filtering to work, original GenBank files must be properly annotated, e.g.:
+```
+LOCUS       BGC0000003             37168 bp    DNA     linear   PLN 03-MAY-2005
+DEFINITION  Alternaria alternata AF-toxin biosynthesis gene cluster (Aft9-1,
+            Aft10-1, Aft11-1, Aft12-1, AftR-2, Aft3-2), complete cds.
+ACCESSION   BGC0000003
+VERSION     BGC0000003.1
+KEYWORDS    .
+SOURCE      Alternaria alternata
+  ORGANISM  Alternaria alternata
+            Eukaryota; Fungi; Dikarya; Ascomycota; Pezizomycotina;
+            Dothideomycetes; Pleosporomycetidae; Pleosporales; Pleosporineae;
+            Pleosporaceae; Alternaria; Alternaria alternata group.
+...
+```
+

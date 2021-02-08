@@ -89,7 +89,7 @@ VNSFGYGGTNAHAILERAP
 
 ## Process GenBank files with fungiSMASH
 
-Use this script to launch instances of fungiSMASH on a folder with GenBank files. 
+Use this script to launch instances of fungiSMASH on a folder with GenBank files. Parameters have already been set in `antismash5_parameters.tsv`, which can be customized. Tested with `antiSMASH 5.1.2` installed through conda.
 
 ```
 usage: antiSMASH_on_GenBank.py [-h] -i INPUTFOLDER -r RESULTS -o OUTPUTFOLDER

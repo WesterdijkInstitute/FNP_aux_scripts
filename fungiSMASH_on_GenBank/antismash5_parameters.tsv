@@ -1,0 +1,5 @@
+--taxon fungi
+--genefinding-tool none
+--minimal
+--skip-zip-file
+--minlength 10

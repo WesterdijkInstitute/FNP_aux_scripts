@@ -1,6 +1,6 @@
 # FNP auxiliary scripts
 
-Small Python scripts to help with fungal biosynthetic gene cluster mining
+Small Python 3 scripts to help with fungal biosynthetic gene cluster mining.
 
 
 ## Rename regions
@@ -24,7 +24,7 @@ Note that this script will write consecutive region numbers (instead of fungiSMA
 
 ## Filter copy
 
-Use this script to copy GenBank files according to a taxonomical filter. 
+Use this script to copy GenBank files according to a taxonomical filter. It depends on Biopython.
 
 ```
 usage: filtercopy_genbank.py [-h] -i INPUT -o OUTPUTFOLDER -t TAXONOMY_FILTER [--include INCLUDE]
@@ -59,7 +59,7 @@ SOURCE      Alternaria alternata
 
 ## Extract sequences
 
-Use this script to extract the amino acid sequences corresponding to genes marked by fungiSMASH 5 as 'biosynthetic'.
+Use this script to extract the amino acid sequences corresponding to genes marked by fungiSMASH 5 as 'biosynthetic'. It depends on Biopython.
 
 ```
 usage: extract_sequences_core_enzymes.py [-h] -i INPUT -n NAME [-b] [--include INCLUDE] [-t TAXONOMY_FILTER] [-d DOMAIN]
@@ -87,4 +87,24 @@ FCVDRDLPLYVGSVKSNIGHLEAASGMAALIKATLMLENEAIPPSINFSRPKENLRIDERNIKIPTALQPWPKGASARIC
 VNSFGYGGTNAHAILERAP
 ```
 
+## Process GenBank files with fungiSMASH
 
+Use this script to launch instances of fungiSMASH on a folder with GenBank files. 
+
+```
+usage: antiSMASH_on_GenBank.py [-h] -i INPUTFOLDER -r RESULTS -o OUTPUTFOLDER
+                               [-p PROCESSES] [-c CPUS]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUTFOLDER, --inputfolder INPUTFOLDER
+                        Place with files
+  -r RESULTS, --results RESULTS
+                        Base output folder for antiSMASH intermediate results
+  -o OUTPUTFOLDER, --outputfolder OUTPUTFOLDER
+                        Base output directory used for antiSMASH _final_
+                        GenBank files
+  -p PROCESSES, --processes PROCESSES
+                        Number of simultaneous antiSMASH processes. Default: 2
+  -c CPUS, --cpus CPUS  CPUs used for each antiSMASH run. Default: 2
+```

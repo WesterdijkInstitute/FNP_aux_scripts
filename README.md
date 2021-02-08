@@ -2,6 +2,7 @@
 
 Small Python scripts to help with fungal biosynthetic gene cluster mining
 
+
 ## Rename regions
 
 Use this script to easily rename all the 'region' GenBank files from the fungiSMASH results. This is specially important for results with generic names (e.g. 'scaffold'), if using tools like [BiG-SCAPE](https://git.wur.nl/medema-group/BiG-SCAPE/).
@@ -20,35 +21,6 @@ optional arguments:
 
 Note that this script will write consecutive region numbers (instead of fungiSMASH's default, which uses the scaffold number).
 
-## Extract sequences
-
-Use this script to extract the amino acid sequences corresponding to genes marked by fungiSMASH 5 as 'biosynthetic'.
-
-```
-usage: extract_sequences_core_enzymes.py [-h] -i INPUT -n NAME [-b] [--include INCLUDE] [-t TAXONOMY_FILTER] [-d DOMAIN]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -i INPUT, --input INPUT
-                        Input. Either a GenBank file or a folder with fungiSMASH results
-  -n NAME, --name NAME  Name of fasta file.
-  -b, --biosynthetic    If activated, only extract proteins flagged fungiSMASH as 'biosynthetic'
-  --include INCLUDE     Optional list of strings used to filter GenBank files to be analyzed
-  -t TAXONOMY_FILTER, --taxonomy_filter TAXONOMY_FILTER
-                        Filter extraction using taxonomy within the GenBank file(s) (if annotated)
-  -d DOMAIN, --domain DOMAIN
-                        Extract domain sub-sequences from core biosynthetic proteins identified by antiSMASH. Valid arguments: KS, AT, A
-```
-
-The headers will have the format `[GenBank base name]~L[Locus number]+CDS[CDS number] BiosyntheticType:[annotated fungiSMASH type] name:[name if annotated] gene:[gene ID if annotated] protein:[protein ID if anntoatedl]`. If extracting a particular domain subsequence, additional information will be added. For example:
-```
->BGC0000003.1~L0+CDS1@0-339_PKS_KS(Iterative-KS) BiosyntheticType:T1PKS gene:AFT9-1 protein:BAD97694.1
-MDPQQRLLLETTYEALENAGIPQANTNGSNTSVHVAMFTRDYDRNVYKDTVGIPKYQVTGTGEAIMSNRISHIFNLHGPS
-MTIDTGCSGAMTAVSQACMSLRSGDCDIALAGAVNLIMSPDHHISMSNLHMLNAEGKSYAFDSRGAGYGRGEGVATIVMK
-RLDDAVRCHDPIRAVILDAVINQDGYTAGITLPSSEAQAQLERKALNRVGLKPQEVAYIEAHGTGTAAGDAAELDALSSV
-FCVDRDLPLYVGSVKSNIGHLEAASGMAALIKATLMLENEAIPPSINFSRPKENLRIDERNIKIPTALQPWPKGASARIC
-VNSFGYGGTNAHAILERAP
-```
 
 ## Filter copy
 
@@ -83,4 +55,36 @@ SOURCE      Alternaria alternata
             Pleosporaceae; Alternaria; Alternaria alternata group.
 ...
 ```
+
+
+## Extract sequences
+
+Use this script to extract the amino acid sequences corresponding to genes marked by fungiSMASH 5 as 'biosynthetic'.
+
+```
+usage: extract_sequences_core_enzymes.py [-h] -i INPUT -n NAME [-b] [--include INCLUDE] [-t TAXONOMY_FILTER] [-d DOMAIN]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        Input. Either a GenBank file or a folder with fungiSMASH results
+  -n NAME, --name NAME  Name of fasta file.
+  -b, --biosynthetic    If activated, only extract proteins flagged fungiSMASH as 'biosynthetic'
+  --include INCLUDE     Optional list of strings used to filter GenBank files to be analyzed
+  -t TAXONOMY_FILTER, --taxonomy_filter TAXONOMY_FILTER
+                        Filter extraction using taxonomy within the GenBank file(s) (if annotated)
+  -d DOMAIN, --domain DOMAIN
+                        Extract domain sub-sequences from core biosynthetic proteins identified by antiSMASH. Valid arguments: KS, AT, A
+```
+
+The headers will have the format `[GenBank base name]~L[Locus number]+CDS[CDS number] BiosyntheticType:[annotated fungiSMASH type] name:[name if annotated] gene:[gene ID if annotated] protein:[protein ID if anntoatedl]`. If extracting a particular domain subsequence, additional information will be added. For example:
+```
+>BGC0000003.1~L0+CDS1@0-339_PKS_KS(Iterative-KS) BiosyntheticType:T1PKS gene:AFT9-1 protein:BAD97694.1
+MDPQQRLLLETTYEALENAGIPQANTNGSNTSVHVAMFTRDYDRNVYKDTVGIPKYQVTGTGEAIMSNRISHIFNLHGPS
+MTIDTGCSGAMTAVSQACMSLRSGDCDIALAGAVNLIMSPDHHISMSNLHMLNAEGKSYAFDSRGAGYGRGEGVATIVMK
+RLDDAVRCHDPIRAVILDAVINQDGYTAGITLPSSEAQAQLERKALNRVGLKPQEVAYIEAHGTGTAAGDAAELDALSSV
+FCVDRDLPLYVGSVKSNIGHLEAASGMAALIKATLMLENEAIPPSINFSRPKENLRIDERNIKIPTALQPWPKGASARIC
+VNSFGYGGTNAHAILERAP
+```
+
 

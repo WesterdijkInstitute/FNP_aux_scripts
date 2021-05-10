@@ -55,10 +55,12 @@ if __name__ == "__main__":
     else:
         padding_space = 3 # no genome has more than 999 BGCs
         
-    for num, gbk in enumerate(gbks):
-        p = gbk.parent
-        old = gbk.name
-        new = "{0}.region{1:0{2}d}.gbk".format(s, num+1, padding_space)
-        move(p/old, p/new)
+    with open(i / "renamed_regions.tsv", "w") as report:
+        for num, gbk in enumerate(gbks):
+            p = gbk.parent
+            old = gbk.name
+            new = "{0}.region{1:0{2}d}.gbk".format(s, num+1, padding_space)
+            move(p/old, p/new)
+            report.write(f"{old}\t{new}\n")
     print("Renamed {} files".format(num_gbks))
         

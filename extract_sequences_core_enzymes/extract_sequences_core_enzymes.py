@@ -28,9 +28,9 @@ import argparse
 from Bio import SeqIO
 
 __author__ = "Jorge Navarro"
-__version__ = "1.1"
+__version__ = "1.2"
 __maintainer__ = "Jorge Navarro"
-__email__ = "j.navarro@wi.knaw.nl"
+__email__ = "jorge.navarromunoz@wur.nl"
 
 
 def parameter_parser():
@@ -198,6 +198,8 @@ if __name__ == "__main__":
         except KeyError:
             exit(f"Error: found unsupported argument for --domain " \
                 f"parameter ({parameters.domain})")
+    else:
+        domain = ""
     
     # Get a list of all GenBank files
     if i.is_dir():

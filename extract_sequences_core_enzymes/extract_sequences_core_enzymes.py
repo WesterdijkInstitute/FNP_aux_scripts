@@ -22,14 +22,13 @@ Can filter by:
 
 """
 
-import os
 import sys
 from pathlib import Path
 import argparse
 from Bio import SeqIO
 
 __author__ = "Jorge Navarro"
-__version__ = "1"
+__version__ = "1.1"
 __maintainer__ = "Jorge Navarro"
 __email__ = "j.navarro@wi.knaw.nl"
 
@@ -40,24 +39,28 @@ def parameter_parser():
     parser.add_argument("-i", "--input", type=Path,
         help="Input. Either a GenBank file or a folder with fungiSMASH results", 
         required=True)
-    parser.add_argument("-n", "--name", type=str, required=True, 
-        help="Name of fasta file.")
+    parser.add_argument("-o", "--output", type=str, help="Name of fasta file. \
+        Default: same as input")
     parser.add_argument("-b", "--biosynthetic", default=False, 
-        action="store_true", help="If activated, only extract proteins flagged \
-        fungiSMASH as 'biosynthetic'")
-    parser.add_argument("--include", default=["region"], type=str, 
+        action="store_true", help="If activated, only extract sequences \
+        flagged by fungiSMASH as 'biosynthetic'")
+    parser.add_argument("--include", default=["region"], nargs='+', 
         help="Optional list of strings used to filter GenBank files to be \
-        analyzed")
+        analyzed. Default: region")
     parser.add_argument("-t", "--taxonomy_filter", type=str, help="Filter \
         extraction using taxonomy within the GenBank file(s) (if annotated)")
     parser.add_argument("-d", "--domain", type=str, help="Extract domain \
         sub-sequences from core biosynthetic proteins identified by antiSMASH. \
-        Valid arguments: KS, AT, A")
+        Valid arguments, choose one from: KS, AT, A")
+    parser.add_argument("-w", "--whole", default=False, action='store_true',
+        help="If activated and --domain was used, extract the whole sequence, \
+        instead of only the domain subsequence.")
     
     return parser.parse_args()
 
 
-def extract_cbp(gbk: list, fasta: dict, biosynthetic: bool, tax_filter: str, domain: str) -> None:
+def extract_cbp(gbk: list, fasta: dict, biosynthetic: bool, tax_filter: str, 
+    domain: str, whole: bool) -> None:
     try:
         records = list(SeqIO.parse(gbk, "genbank"))
     except ValueError as e:
@@ -115,9 +118,9 @@ def extract_cbp(gbk: list, fasta: dict, biosynthetic: bool, tax_filter: str, dom
                     try:
                         sequence = CDS.qualifiers["translation"][0]
                     except KeyError:
-                        sys.exit("Error: file {} missing 'translation' qualifier".format(gbk))
+                        exit(f"Error: file {gbk} missing 'translation' qualifier")
                         
-                    basic_label = "{}~L{}+CDS{}".format(gbk.stem, locus_num, cds_num)
+                    basic_label = f"{gbk.stem}~L{locus_num}+CDS{cds_num}"
                     label_extra = ""
                     # write up extra labels
                     if protein_type != "":
@@ -141,24 +144,28 @@ def extract_cbp(gbk: list, fasta: dict, biosynthetic: bool, tax_filter: str, dom
                                     if domain != dom_acc:
                                         continue
                                     
-                                    coords = name[1][1:-2]
-                                    start = int(coords.split("-")[0])
-                                    end = int(coords.split("-")[1])
-                                    domains[dom_acc] = (start, end)
-                                    
-                                    fasta["{}@{}_{}{}".format(basic_label, coords, domain, label_extra)] = sequence[start:end]
+                                    if whole:
+                                        fasta[f"{basic_label}{label_extra}"] = sequence
+                                    else:
+                                        coords = name[1][1:-2]
+                                        start = int(coords.split("-")[0])
+                                        end = int(coords.split("-")[1])
+                                        domains[dom_acc] = (start, end)
+                                        
+                                        fasta[f"{basic_label}@{coords}_{domain}{label_extra}"] = sequence[start:end]
                             
                     else:
-                        fasta["{}{}".format(basic_label, label_extra)] = sequence
+                        fasta[f"{basic_label}{label_extra}"] = sequence
     return
 
 
-def write_fasta_file(fasta: dict, n: str) -> None:
-    with open("{}.fasta".format(n), "w") as f:
+def write_fasta_file(fasta: dict, filename: str) -> None:
+    with open(f"{filename}.fasta", "w") as f:
         for header, sequence in fasta.items():
             # format sequence
             l = len(sequence)
-            seq80_a = "\n".join([sequence[row*80:(row+1)*80] for row in range(l // 80)])
+            seq80_a = "\n".join([sequence[row*80:(row+1)*80] for row in 
+                range(l // 80)])
             seq80_b = ""
             remainder = l % 80
             if remainder > 0:
@@ -174,12 +181,13 @@ if __name__ == "__main__":
     # Validate parameters
     i = parameters.input
     if not (i.is_dir() or i.is_file()):
-        sys.exit("Error: {} is not a valid folder or file".format(i))
+        exit(f"Error: {i} is not a valid folder or file")
 
-    n = parameters.name
-    bad_chars= set("/|\:<>*")
-    if len(set(n) & bad_chars) > 0:
-        sys.exit("Error: illegal characters used with parameter --name")
+    if parameters.output:
+        bad_chars= set("/|\:<>*")
+        if len(set(parameters.output) & bad_chars) > 0:
+            exit("Error: illegal characters used with parameter --output")
+        output_filename = parameters.output
         
     if parameters.domain:
         d_alias = {"KS": "PKS_KS(Iterative-KS)",
@@ -188,7 +196,8 @@ if __name__ == "__main__":
         try:
             domain = d_alias[parameters.domain.upper()]
         except KeyError:
-            sys.exit("Error: found unsupported argument for --domain parameter ({})".format(parameters.domain))
+            exit(f"Error: found unsupported argument for --domain " \
+                f"parameter ({parameters.domain})")
     
     # Get a list of all GenBank files
     if i.is_dir():
@@ -197,21 +206,25 @@ if __name__ == "__main__":
             if any([word in gbk.name for word in parameters.include]):
                 gbks.append(gbk)
         if len(gbks) == 0:
-            sys.exit("Error: input is a folder, but no files with the specified parameters in the '--include' argument were found")
+            exit("Error: input is a folder, but no files with the specified \
+                parameters in the '--include' argument were found")
     else:
         gbks = list([i])
         if i.suffix != ".gbk":
-            sys.exit("Error: input is a file, but does not contain the .gbk extension")
+            exit("Error: input is a file, but does not contain the .gbk \
+                extension")
         if not any([word in i.name for word in parameters.include]):
-            sys.exit("Error: input is a file, but does not match the strings specified with the '--include' argument")
+            exit("Error: input is a file, but does not match the strings \
+                specified with the '--include' argument")
             
             
     # Extract sequences
     fasta = dict()
     for gbk in gbks:
-        extract_cbp(gbk, fasta, parameters.biosynthetic, parameters.taxonomy_filter, domain)
+        extract_cbp(gbk, fasta, parameters.biosynthetic, 
+            parameters.taxonomy_filter, domain, parameters.whole)
     
     
     # Write output
-    print("Got {} sequence(s)".format(len(fasta)))
-    write_fasta_file(fasta, n)
+    print(f"Got {len(fasta)} sequence(s)")
+    write_fasta_file(fasta, output_filename)
